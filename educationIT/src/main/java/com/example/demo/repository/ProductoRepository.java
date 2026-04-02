@@ -95,15 +95,14 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
 	// --- JPQL personalizado ---
 
-	// Busca el producto más caro usando una subquery con MAX sobre el precio.
-	// Retorna Optional vacío si la tabla está vacía.
+	// Busca el producto más caro. Retorna lista porque puede haber varios con el mismo precio máximo.
+	// El service toma el primero con stream().findFirst().
 	@Query("SELECT p FROM Producto p WHERE p.precio = (SELECT MAX(p2.precio) FROM Producto p2)")
-	Optional<Producto> findMasCaro();
+	List<Producto> findMasCaro();
 
-	// Busca el producto más barato usando una subquery con MIN sobre el precio.
-	// Retorna Optional vacío si la tabla está vacía.
+	// Busca el producto más barato. Retorna lista por la misma razón que findMasCaro.
 	@Query("SELECT p FROM Producto p WHERE p.precio = (SELECT MIN(p2.precio) FROM Producto p2)")
-	Optional<Producto> findMasBarato();
+	List<Producto> findMasBarato();
 
 	// Retorna los productos de una empresa ordenados por precio descendente.
 	// Usa @Param para mapear el parámetro :empresaId al argumento del método.

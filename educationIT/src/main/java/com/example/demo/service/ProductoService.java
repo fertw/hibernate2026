@@ -114,13 +114,15 @@ public class ProductoService {
 	}
 
 	// Retorna el producto más caro, o Optional vacío si no hay productos.
+	// Usa stream().findFirst() porque puede haber varios productos con el mismo precio máximo.
 	public Optional<Producto> obtenerMasCaro() {
-		return productoRepository.findMasCaro();
+		return productoRepository.findMasCaro().stream().findFirst();
 	}
 
 	// Retorna el producto más barato, o Optional vacío si no hay productos.
+	// Usa stream().findFirst() por la misma razón que obtenerMasCaro.
 	public Optional<Producto> obtenerMasBarato() {
-		return productoRepository.findMasBarato();
+		return productoRepository.findMasBarato().stream().findFirst();
 	}
 
 	// Cuenta cuántos productos tiene una empresa.
