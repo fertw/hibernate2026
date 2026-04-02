@@ -1,14 +1,18 @@
 package com.example.demo;
 
+import java.util.List;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 
+import com.example.demo.model.Producto;
 import com.example.demo.model.tableperclass.EmpleadoC;
 import com.example.demo.model.tableperclass.EmpleadoContratadoC;
 import com.example.demo.model.tableperclass.EmpleadoPlantaC;
 import com.example.demo.service.EmpleadoService;
 import com.example.demo.service.EmpresaService;
+import com.example.demo.service.ProductoService;
 
 
 @SpringBootApplication
@@ -20,33 +24,20 @@ public class EducationItApplication {
 		
 		EmpresaService empresaService = context.getBean(EmpresaService.class);
 		EmpleadoService empleadoService = context.getBean(EmpleadoService.class);
-		//empresaService.guardarEmpresaConProductos();
 		
-//		EmpleadoContratadoA empleadoContratado1 = new EmpleadoContratadoA("Juan", 500.0, 40);
-//		EmpleadoContratadoA empleadoContratado2 = new EmpleadoContratadoA("Maria", 600.0, 35);
-//		EmpleadoPlantaA empleadoPlanta1 = new EmpleadoPlantaA("Carlos", 3000.0);	
-//		EmpleadoPlantaA empleadoPlanta2 = new EmpleadoPlantaA("Ana", 3500.0);
-//		empleadoService.guardarEmpleadoA(empleadoPlanta1);
-//		empleadoService.guardarEmpleadoA(empleadoPlanta2);
-//		
-//		empleadoService.guardarEmpleadoA(empleadoContratado1);
-//		empleadoService.guardarEmpleadoA(empleadoContratado2);
+		ProductoService productoService = context.getBean(ProductoService.class);
 		
-//		EmpleadoContratadoB empleadoContratado3 = new EmpleadoContratadoB("Pedro", "Sanchez", "20300439", 550.0, 30);
-//		EmpleadoContratadoB empleadoContratado4 = new EmpleadoContratadoB("Lucia", "Gomez", "20300440", 650.0, 25);
-//		EmpleadoPlantaB empleadoPlanta3 = new EmpleadoPlantaB("Die Gomez", "Perez", "20300441", 3200.0);
-//		EmpleadoPlantaB empleadoPlanta4 = new EmpleadoPlantaB("Sofia", "Lopez", "20300442", 3700.0);
-//		
-//		empleadoService.guardarEmpleadoB(empleadoPlanta3);
-//		empleadoService.guardarEmpleadoB(empleadoPlanta4);
-//		empleadoService.guardarEmpleadoB(empleadoContratado3);
-//		empleadoService.guardarEmpleadoB(empleadoContratado4);
+		//Generamos 6000 productos random
+//		 for (int i = 1; i <= 6000; i++) {
+//	            Producto producto = new Producto("Producto "+ i,"Desc " + i , Math.random() * 100);
+//	            productoService.guardarProducto(producto);
+//	        }
 		
-		EmpleadoC empleadoContratado5 = new EmpleadoContratadoC("Miguel", 45, 20.0);
-		EmpleadoC empleadoPlanta5 = new EmpleadoPlantaC("Laura", 4000.0);
-		
-		empleadoService.guardarEmpleadoC(empleadoContratado5);
-		empleadoService.guardarEmpleadoC(empleadoPlanta5);
+		List <Producto> productos = productoService.obtenerTodosLosProductos();
+		for (Producto producto : productos) {
+			System.out.println("Producto: " + producto.getNombre() + ", Precio: " + producto.getPrecio());
+		}
+
 	}
 
 }

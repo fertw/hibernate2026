@@ -26,6 +26,13 @@ public class Producto {
 		super();
 	}
 	
+	
+	public Producto(String nombre, String descripcion, Double precio) {
+		super();
+		this.nombre = nombre;
+		this.descripcion = descripcion;
+		this.precio = precio;
+	}
 	public Long getId() {
 		return id;
 	}
