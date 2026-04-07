@@ -3,11 +3,14 @@ package com.example.demo.model;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Empresa {
@@ -16,7 +19,17 @@ public class Empresa {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
+	@Column(nullable = false, length = 100) // Restricción a nivel de base de datos
+	@Size(min = 3, max = 100, message = "{empresa.nombre.size}") // Validación a nivel de aplicación
 	private String nombre;
+	
+	
+	@Pattern(
+		    regexp = "\\d{2}-\\d{8}-\\d{1}",
+		    message = "{empresa.cuit.pattern}"
+		)
+	@Column(nullable = false, unique = true, length = 13) // Restricción a nivel de base de datos
 	private String cuit;
 	
 	@OneToMany(mappedBy = "empresa", cascade = CascadeType.ALL, orphanRemoval = true)

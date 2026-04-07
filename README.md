@@ -1,37 +1,47 @@
-# 📚 Clase 4 – Introducción a Spring Data JPA
+# 📘 Clase 5 – Validaciones en Spring Boot con Hibernate Validator
 
-En esta clase incorporamos **Spring Data JPA** al proyecto para simplificar el acceso a la base de datos mediante la creación de interfaces `Repository`. Dejamos de usar el `EntityManager` directamente y comenzamos a aprovechar la potencia de Spring.
+## ✅ Temas vistos
 
----
-
-## ✅ Objetivos de la Clase
-
-- Integrar Spring Data JPA en un proyecto Spring Boot.
-- Crear `Repository` para nuestras entidades.
-- Utilizar métodos automáticos para persistir y consultar datos.
-- Explorar formas de definir consultas personalizadas.
-
----
-
-## 🧱 Entidades trabajadas
-
-- `Empresa`
-- `Producto`
-- `Empleado`
-- `Categoria`
-- `Sucursal`
+- Introducción a Hibernate Validator (implementación de Bean Validation – JSR 380)
+- Anotaciones de validación estándar:
+  - `@NotNull`, `@Size`, `@Min`, `@Max`, `@Positive`, `@NotBlank`
+- Aplicación de validaciones sobre entidades como `Producto`
+- Validación de relaciones (`@NotNull` en campos `@ManyToOne`)
+- Validación manual con `Validator.validate(obj)`
+- Creación de validaciones personalizadas:
+  - Definición de anotación (`@CodigoUnico`)
+  - Implementación con `ConstraintValidator`
+  - Inyección de dependencias (`ProductoRepository`) dentro del validador
+- Errores comunes:
+  - `NullPointerException` en validadores por falta de configuración
+  - Necesidad del bean `LocalValidatorFactoryBean` para integración con Spring
+- Pruebas desde el método `main()` sin usar controlador
 
 ---
 
-## 🔌 Repositorios implementados
+## 📝 Tarea para la próxima clase
 
-Se crearon interfaces que extienden `JpaRepository`, por ejemplo:
+### 🎯 Objetivo:
 
-```java
-public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
-    List<Empresa> findByNombre(String nombre);
-    
-}
-empresaRepository.save(empresa);
-empresaRepository.findById(1L);
-empresaRepository.findAll();
+Completar las **validaciones en todas las entidades del proyecto**.
+
+### 📌 Instrucciones:
+
+1. Agregar anotaciones de validación estándar en:
+   - `Empresa` (ej: nombre obligatorio, CUIT único)
+   - `Empleado` (nombre, apellido, sueldo)
+   - `Sucursal` (nombre, dirección, teléfono)
+   - `Categoria` (nombre)
+
+2. Verificar relaciones con `@NotNull` (ej: cada `Empleado` debe tener una `Empresa`).
+
+3. Aplicar mensajes personalizados para cada validación.
+
+4. (Opcional) Crear una validación personalizada adicional, por ejemplo:
+   - `@CuitUnico` para validar que no existan dos empresas con el mismo CUIT.
+
+5. Probar todas las validaciones desde el `main()` del proyecto, mostrando errores si existen.
+
+---
+
+📆 **Mostrar funcionando al inicio de la próxima clase.**

@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.dto.EmpresaDTO;
 import com.example.demo.model.Empresa;
 import com.example.demo.repository.EmpresaRepository;
 
@@ -25,9 +26,10 @@ public class EmpresaService {
 		return empresaRepository.findAll();
 	}
 	
-	public Empresa buscarPorCuit(String cuit) {
-		return empresaRepository.findByCuit(cuit).orElse(null);
-	}
+//	public EmpresaDTO buscarPorCuit(String cuit) {
+//		Empresa empresa =  empresaRepository.findByCuit(cuit).orElse(null);
+//		//return modelMapper(empresa);
+//	}
 	
 	public List<Empresa> buscarPorNombre(String nombre) {
 		return empresaRepository.findByNombre(nombre);
