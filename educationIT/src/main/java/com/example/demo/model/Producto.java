@@ -30,6 +30,9 @@ public class Producto {
 	@JoinColumn(name = "empresa_id")	
 	private Empresa empresa;
 	
+	@ManyToOne
+	private Categoria categoria;
+	
 	
 	public Producto() {
 		super();
@@ -69,6 +72,16 @@ public class Producto {
 
 	public void setEmpresa(Empresa empresa) {
 		this.empresa = empresa;		
+	}
+
+
+	public Categoria getCategoria() {
+		return categoria;
+	}
+
+
+	public void setCategoria(Categoria categoria) {
+		this.categoria = categoria;
 	}
 	
 	
