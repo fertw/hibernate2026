@@ -1,0 +1,40 @@
+# Entorno de base de datos para el curso de Hibernate
+# Levantar:  docker compose up -d
+# Apagar:    docker compose down        (los datos persisten en el volumen)
+# Resetear:  docker compose down -v     (borra el volumen y empieza de cero)
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: hibernate-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root      # coincide con application.properties
+      MYSQL_DATABASE: empresa        # se crea automáticamente al primer arranque
+    ports:
+      - "3306:3306"                  # accesible desde Spring Boot y MySQL Workbench de escritorio
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # GUI de administración web (equivalente a Workbench, accesible en http://localhost:8080)
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: hibernate-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8080:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
