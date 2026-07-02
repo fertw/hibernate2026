@@ -61,6 +61,29 @@ docker compose down -v      # apagar y borrar los datos (empezar de cero)
 
 | Clase | Tema | Tag |
 |-------|------|-----|
-| 1 | Introducción a Hibernate: persistencia, JDBC vs ORM, primer guardado | _(pendiente)_ |
+| 1 | Introducción a Hibernate: persistencia, JDBC vs ORM, primer guardado | `clase-1` |
+| 2 | Asociaciones JPA (1:1, 1:N, N:M), capa DAL con EntityManager, servicio y demo | `clase-2` |
 
 > Se irá completando a medida que avance el curso.
+
+---
+
+## 📘 Clase 2 — Asociaciones JPA, capa de servicio y demo
+
+Modelo de dominio con las tres cardinalidades sobre entidades reales:
+
+- **Empresa 1:1 Direccion** — `@OneToOne` (EAGER) con `cascade = ALL`.
+- **Empresa 1:N Producto** — `@OneToMany(mappedBy = "empresa")` (LAZY) con `cascade = ALL` y `orphanRemoval = true`.
+- **Producto N:M Categoria** — `@ManyToMany` con `@JoinTable(producto_categoria)`; `Producto` es el dueño.
+
+Conceptos que se trabajan:
+
+- `mappedBy`, cascada y `orphanRemoval`; fetching **LAZY/EAGER**.
+- **Helpers de sincronización bidireccional** (`addProducto`, `addCategoria`, `setDireccion`).
+- **Capa DAL con `EntityManager`**: `EmpresaDao`, `ProductoDao`, `CategoriaDao`, `DireccionDao`.
+- Consultas **JPQL** con `JOIN` y `JOIN FETCH` para recorrer las asociaciones.
+- **Capa de servicio** (`ProductoService`) que orquesta varios DAOs con `@Transactional`.
+- `CommandLineRunner` de demo que puebla el modelo al arrancar.
+
+> Requiere **JDK 21+** (`java.version = 21`). El proyecto se probó con Temurin 25.
+> Ejecutar con la DB levantada (`docker compose up -d`): `./mvnw spring-boot:run`.
