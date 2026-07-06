@@ -63,6 +63,7 @@ docker compose down -v      # apagar y borrar los datos (empezar de cero)
 |-------|------|-----|
 | 1 | Introducción a Hibernate: persistencia, JDBC vs ORM, primer guardado | `clase-1` |
 | 2 | Asociaciones JPA (1:1, 1:N, N:M), capa DAL con EntityManager, servicio y demo | `clase-2` |
+| 3 | Mapeo de herencia JPA: `TABLE_PER_CLASS`, `JOINED`, `SINGLE_TABLE` | `clase-3` |
 
 > Se irá completando a medida que avance el curso.
 
@@ -87,3 +88,55 @@ Conceptos que se trabajan:
 
 > Requiere **JDK 21+** (`java.version = 21`). El proyecto se probó con Temurin 25.
 > Ejecutar con la DB levantada (`docker compose up -d`): `./mvnw spring-boot:run`.
+
+---
+
+## 📘 Clase 3 — Mapeo de Herencia con JPA/Hibernate
+
+Se implementaron las tres estrategias de mapeo de herencia de JPA (`TABLE_PER_CLASS`, `JOINED`, `SINGLE_TABLE`) sobre una jerarquía común `Empleado` / `EmpleadoTiempoCompleto` / `EmpleadoContratado`, conviviendo en el mismo `EntityManagerFactory` para comparar el DDL y el comportamiento de consultas polimórficas de cada una.
+
+### Estrategias implementadas
+
+| Estrategia | Paquete | Tablas generadas | Generación de ID |
+|---|---|---|---|
+| `TABLE_PER_CLASS` | `model.tablaporclase` | `empleados_tiempo_completo`, `empleados_contratados` | `GenerationType.TABLE` |
+| `JOINED` | `model.joined` | `empleados_joined`, `empleados_tc_joined`, `empleados_contratados_joined` | `GenerationType.IDENTITY` |
+| `SINGLE_TABLE` | `model.singletable` | `empleados_single` (+ columna discriminadora `tipo_empleado`) | `GenerationType.IDENTITY` |
+
+### Errores provocados y resueltos (valor pedagógico)
+
+| Error | Causa | Solución |
+|---|---|---|
+| `AnnotationException: identity generator ... union-subclass` | `TABLE_PER_CLASS` con `GenerationType.IDENTITY` | Cambiar a `GenerationType.TABLE` |
+| `AnnotationException: Entity has no identifier` | `@Id` ausente en la clase abstracta raíz | El `@Id` siempre va en la raíz de la jerarquía |
+| `DuplicateMappingException: share the entity name 'Empleado'` | Clases con mismo simple name en distintos paquetes, sin `@Entity(name=...)` | Nombre de entidad único explícito en las 9 clases (`EmpleadoTPC`, `EmpleadoJoined`, `EmpleadoSingleTable`, etc.) |
+| `BeanCreationException: bean 'empleadoRepository' ... already been defined` | Interfaces `JpaRepository` con mismo simple name en distintos paquetes | Renombrar interfaces: `EmpleadoTablaPorClaseRepository`, `EmpleadoJoinedRepository`, `EmpleadoSingleTableRepository` |
+
+### Archivos principales
+
+```
+model/tablaporclase/Empleado.java
+model/tablaporclase/EmpleadoTiempoCompleto.java
+model/tablaporclase/EmpleadoContratado.java
+
+model/joined/Empleado.java
+model/joined/EmpleadoTiempoCompleto.java
+model/joined/EmpleadoContratado.java
+
+model/singletable/Empleado.java
+model/singletable/EmpleadoTiempoCompleto.java
+model/singletable/EmpleadoContratado.java
+
+repository/tablaporclase/EmpleadoTablaPorClaseRepository.java
+repository/joined/EmpleadoJoinedRepository.java
+repository/singletable/EmpleadoSingleTableRepository.java
+
+DemoApplication.java (3 CommandLineRunner, uno por estrategia)
+```
+
+### Aprendizajes clave
+
+- El modelo relacional no soporta la relación "es un" nativamente; JPA resuelve esto con `@Inheritance`.
+- El nombre de entidad JPA y el nombre de bean de repositorio Spring se resuelven por **simple name**, no por paquete completo — reusar nombres de clase entre paquetes exige desambiguar explícitamente en cada capa (`@Entity(name=...)`, nombre de interfaz).
+- `TABLE_PER_CLASS` requiere `GenerationType.TABLE` para evitar colisión de IDs entre tablas de subclase.
+- `SINGLE_TABLE` es la estrategia más performante pero exige que los atributos de subclase acepten `NULL`.
