@@ -17,29 +17,31 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "productos")
 public class Producto {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String nombre;
 	private Double precio;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "empresa_id")
 	private Empresa empresa;
-	
+
 	@ManyToMany
-	@JoinTable(
-		name = "producto_categoria",
-		joinColumns = @JoinColumn(name = "producto_id"),
-		inverseJoinColumns = @JoinColumn(name = "categoria_id")
-	)
+	@JoinTable(name = "producto_categoria", joinColumns = @JoinColumn(name = "producto_id"), inverseJoinColumns = @JoinColumn(name = "categoria_id"))
 	private Set<Categoria> categorias = new HashSet<>();
-	
-	public Producto() {
+
+	public Producto(String string, double d) {
 		super();
+		this.nombre = string;
+		this.precio = d;
+
 	}
 	
+	public Producto() {
+	}
+
 	public Producto(String nombre, Double precio, Empresa empresa) {
 		super();
 		this.nombre = nombre;
@@ -48,7 +50,8 @@ public class Producto {
 	}
 
 	// Helpers de sincronización bidireccional para la N:M.
-	// Producto es el dueño de la relación, así que mantenemos ambos lados en memoria.
+	// Producto es el dueño de la relación, así que mantenemos ambos lados en
+	// memoria.
 	public void addCategoria(Categoria categoria) {
 		categorias.add(categoria);
 		categoria.getProductos().add(this);

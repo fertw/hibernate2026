@@ -64,6 +64,7 @@ docker compose down -v      # apagar y borrar los datos (empezar de cero)
 | 1 | Introducción a Hibernate: persistencia, JDBC vs ORM, primer guardado | `clase-1` |
 | 2 | Asociaciones JPA (1:1, 1:N, N:M), capa DAL con EntityManager, servicio y demo | `clase-2` |
 | 3 | Mapeo de herencia JPA: `TABLE_PER_CLASS`, `JOINED`, `SINGLE_TABLE` | `clase-3` |
+| 4 | Spring Data JPA: Query Methods, `@Query` (JPQL y SQL nativo), paginación | `clase-4` |
 
 > Se irá completando a medida que avance el curso.
 
@@ -140,3 +141,33 @@ DemoApplication.java (3 CommandLineRunner, uno por estrategia)
 - El nombre de entidad JPA y el nombre de bean de repositorio Spring se resuelven por **simple name**, no por paquete completo — reusar nombres de clase entre paquetes exige desambiguar explícitamente en cada capa (`@Entity(name=...)`, nombre de interfaz).
 - `TABLE_PER_CLASS` requiere `GenerationType.TABLE` para evitar colisión de IDs entre tablas de subclase.
 - `SINGLE_TABLE` es la estrategia más performante pero exige que los atributos de subclase acepten `NULL`.
+
+---
+
+## 📘 Clase 4 — Spring Data JPA: Query Methods, `@Query` y Paginación
+
+Se reemplaza la capa DAL manual con `EntityManager` de las clases anteriores por repositorios `JpaRepository` de Spring Data, sobre las entidades `Empresa` y `Producto`.
+
+### Temas cubiertos
+
+- **CRUD básico** heredado de `JpaRepository` (`save`, `count`, etc.) sin código propio.
+- **Query Methods**: consultas derivadas del nombre del método (`findByNombreContainingIgnoreCase`, `findByPrecioGreaterThan`, `existsByNombre`, `findFirstByOrderByPrecioAsc`, `findTop3ByOrderByPrecioDesc`), incluyendo `Optional` para resultados que pueden no existir.
+- **`@Query`**: JPQL propia navegando la asociación (`buscarPorNombreDeEmpresa`) y SQL nativo (`masCaro`, con `nativeQuery = true`).
+- **Paginación**: `Pageable` / `PageRequest` con `Sort`, recorriendo todas las páginas con `Page#hasNext()`.
+- **Capa de servicio transaccional** (`ProductoService`, `EmpresaService`) que envuelve al repositorio con `@Transactional`.
+
+### Archivos principales
+
+```
+repository/ProductoRepository.java   # Query Methods + @Query (JPQL y nativo)
+repository/EmpresaRepository.java    # JpaRepository puro
+service/ProductoService.java
+service/EmpresaService.java
+DemoApplication.java                 # CommandLineRunner con las 5 secciones de la demo
+```
+
+### Aprendizajes clave
+
+- Los Query Methods cubren la mayoría de consultas simples sin escribir una sola línea de JPQL.
+- `@Query` con SQL nativo es la vía de escape cuando la consulta no se puede expresar (o no conviene) como Query Method ni como JPQL.
+- `Pageable` desacopla la paginación del método de repositorio: el mismo `findAll(Pageable)` sirve para cualquier tamaño de página y orden.
