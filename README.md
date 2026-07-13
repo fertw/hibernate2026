@@ -65,6 +65,7 @@ docker compose down -v      # apagar y borrar los datos (empezar de cero)
 | 2 | Asociaciones JPA (1:1, 1:N, N:M), capa DAL con EntityManager, servicio y demo | `clase-2` |
 | 3 | Mapeo de herencia JPA: `TABLE_PER_CLASS`, `JOINED`, `SINGLE_TABLE` | `clase-3` |
 | 4 | Spring Data JPA: Query Methods, `@Query` (JPQL y SQL nativo), paginación | `clase-4` |
+| 5 | Capa de DTO y Mapper: desacoplar entidades JPA de la presentación | `clase-5` |
 
 > Se irá completando a medida que avance el curso.
 
@@ -171,3 +172,34 @@ DemoApplication.java                 # CommandLineRunner con las 5 secciones de 
 - Los Query Methods cubren la mayoría de consultas simples sin escribir una sola línea de JPQL.
 - `@Query` con SQL nativo es la vía de escape cuando la consulta no se puede expresar (o no conviene) como Query Method ni como JPQL.
 - `Pageable` desacopla la paginación del método de repositorio: el mismo `findAll(Pageable)` sirve para cualquier tamaño de página y orden.
+
+---
+
+## 📘 Clase 5 — Capa de DTO y Mapper
+
+Se introduce una capa de **DTO** (`ProductoDTO`) y un **Mapper** (`ProductoMapper`) para que la capa de presentación (el `CommandLineRunner` de demo) y el `ProductoService` dejen de exponer entidades JPA (`Producto`) hacia afuera.
+
+### Temas cubiertos
+
+- **`ProductoDTO`**: objeto plano (sin proxies de Hibernate) con `nombre`, `precio` y `empresaNombre` **aplanado** — evita `LazyInitializationException` fuera de la sesión.
+- **`ProductoMapper`**: clase utilitaria con métodos estáticos `toDTO`, `toEntity` y `toDTOList` para convertir entre `Producto` y `ProductoDTO`.
+- **`ProductoService`** reescrito para trabajar 100% con DTOs: `guardar`, `crearProducto`, `buscarPorTexto`, `buscarPorNombre`, `buscarPorPrecioMayorA`, `masBarato`, `top3MasCaros`, `buscarPorNombreDeEmpresa`, `masCaro` y `listadoPaginado` devuelven/reciben `ProductoDTO` (o `Page<ProductoDTO>`).
+- **Alta 100% con DTO**: `crearProducto(ProductoDTO)` recibe la empresa como `String` (nombre) y la resuelve internamente con `EmpresaRepository.findByNombre`.
+- **Rollback ante referencia inválida**: si la empresa indicada en el DTO no existe, `findByNombre` devuelve `null` y la operación falla dentro de la transacción — no queda un `Producto` huérfano en la base.
+- `@Transactional(readOnly = true)` a nivel de clase en `ProductoService`, con `@Transactional` explícito (de Spring, no de Jakarta) en los métodos de escritura.
+
+### Archivos principales
+
+```
+dto/ProductoDTO.java
+mapper/ProductoMapper.java
+service/ProductoService.java
+repository/EmpresaRepository.java     # + findByNombre
+DemoApplication.java                  # demo actualizada: todo entra/sale como DTO
+```
+
+### Aprendizajes clave
+
+- Las entidades JPA no deberían cruzar la frontera hacia la capa de presentación: fuera de la sesión de Hibernate, un `Producto` con asociaciones LAZY puede disparar `LazyInitializationException`. El DTO "aplana" lo que hace falta mostrar.
+- El Mapper centraliza la conversión Entidad ↔ DTO en un solo lugar, en vez de repetir `getX()/setX()` en cada método del servicio.
+- Resolver relaciones (como la `Empresa` de un `Producto`) por un campo de negocio (nombre) en vez de pasar la entidad completa simplifica el contrato del DTO, a costa de una consulta extra al repositorio.
