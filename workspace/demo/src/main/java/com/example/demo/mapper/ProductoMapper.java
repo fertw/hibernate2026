@@ -3,7 +3,9 @@ package com.example.demo.mapper;
 import java.util.List;
 
 import com.example.demo.dto.ProductoDTO;
+import com.example.demo.model.Empresa;
 import com.example.demo.model.Producto;
+import com.example.demo.repository.EmpresaRepository;
 
 public class ProductoMapper {
 	
@@ -32,6 +34,20 @@ public class ProductoMapper {
 
 	public static List<ProductoDTO> toDTOList(List<Producto> productos) {
 		return productos.stream().map(ProductoMapper::toDTO).toList();
+	}
+
+	public static Producto toEntity(ProductoDTO dto, EmpresaRepository empresaRepository) {
+		if (dto == null) {
+			return null;
+		}
+		Producto producto = new Producto();
+		producto.setNombre(dto.getNombre());
+		producto.setPrecio(dto.getPrecio());
+		if (dto.getEmpresaNombre() != null) {
+			Empresa empresa = empresaRepository.findByNombre(dto.getEmpresaNombre());
+			producto.setEmpresa(empresa);
+		}
+		return producto;
 	}
 
 }

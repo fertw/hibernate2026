@@ -13,6 +13,8 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 
 @Entity
 @Table(name = "productos")
@@ -21,12 +23,20 @@ public class Producto {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
+	@NotBlank(message = "{producto.nombre.obligatorio}")
 	private String nombre;
+	
+	@Positive(message = "{producto.precio.positivo}")
 	private Double precio;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "empresa_id")
 	private Empresa empresa;
+	
+	
+	@Positive(message = "{producto.cantidad.minima}")
+	private int cantidad;
 
 	@ManyToMany
 	@JoinTable(name = "producto_categoria", joinColumns = @JoinColumn(name = "producto_id"), inverseJoinColumns = @JoinColumn(name = "categoria_id"))
@@ -47,6 +57,13 @@ public class Producto {
 		this.nombre = nombre;
 		this.precio = precio;
 		this.empresa = empresa;
+	}
+
+	public Producto(String nombre, double valor, int cantidad) {
+		super();
+		this.nombre = nombre;
+		this.precio = valor;
+		this.cantidad = cantidad;
 	}
 
 	// Helpers de sincronización bidireccional para la N:M.
@@ -101,5 +118,15 @@ public class Producto {
 	public void setCategorias(Set<Categoria> categorias) {
 		this.categorias = categorias;
 	}
+
+	public int getCantidad() {
+		return cantidad;
+	}
+
+	public void setCantidad(int cantidad) {
+		this.cantidad = cantidad;
+	}
+
+	
 
 }
