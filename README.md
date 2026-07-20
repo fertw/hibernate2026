@@ -66,6 +66,7 @@ docker compose down -v      # apagar y borrar los datos (empezar de cero)
 | 3 | Mapeo de herencia JPA: `TABLE_PER_CLASS`, `JOINED`, `SINGLE_TABLE` | `clase-3` |
 | 4 | Spring Data JPA: Query Methods, `@Query` (JPQL y SQL nativo), paginación | `clase-4` |
 | 5 | Capa de DTO y Mapper: desacoplar entidades JPA de la presentación | `clase-5` |
+| 6 | Bean Validation, validator personalizado y Spring Boot Actuator | `clase-6` |
 
 > Se irá completando a medida que avance el curso.
 
@@ -203,3 +204,52 @@ DemoApplication.java                  # demo actualizada: todo entra/sale como D
 - Las entidades JPA no deberían cruzar la frontera hacia la capa de presentación: fuera de la sesión de Hibernate, un `Producto` con asociaciones LAZY puede disparar `LazyInitializationException`. El DTO "aplana" lo que hace falta mostrar.
 - El Mapper centraliza la conversión Entidad ↔ DTO en un solo lugar, en vez de repetir `getX()/setX()` en cada método del servicio.
 - Resolver relaciones (como la `Empresa` de un `Producto`) por un campo de negocio (nombre) en vez de pasar la entidad completa simplifica el contrato del DTO, a costa de una consulta extra al repositorio.
+
+---
+
+## 📘 Clase 6 — Bean Validation, validator personalizado y Actuator
+
+Se agrega **Bean Validation** (Jakarta Validation + Hibernate Validator) sobre `Empresa` y `Producto`, incluyendo un **constraint personalizado** con dependencia inyectada, y **Spring Boot Actuator** para observabilidad básica.
+
+### Temas cubiertos
+
+- **Validación declarativa**: `@NotBlank`/`@Size` (nombre), `@Pattern` (CUIT) en `Empresa`; `@NotBlank`/`@Positive` (nombre, precio, cantidad) en `Producto`. Mensajes externalizados en `ValidationMessages.properties`.
+- **Constraint personalizado con dependencia de Spring**: `@NombreEmpresaUnico` + `NombreEmpresaUnicoValidator`, que recibe `EmpresaRepository` por constructor para chequear unicidad contra la base.
+- **Validation groups**: `@NombreEmpresaUnico` vive en un grupo aparte (`ChequeoUnicidad`), no en `Default`. Un `ConstraintValidator` que consulta la base **no es seguro de correr durante el flush automático de Hibernate** (dispara un flush reentrante sobre la misma `Session`), así que ese chequeo solo corre cuando se pide explícitamente.
+- **`EmpresaService.guardarValidando()`**: valida a mano (`Default` + `ChequeoUnicidad`) con el `Validator` inyectado por Spring **antes** del `save()`, y arma un mensaje detallado por campo si hay violaciones.
+- **Cascada de validación vs. cascada de persistencia**: `@Valid` en `Empresa.productos` (valida los productos) es un mecanismo *distinto* de `cascade = CascadeType.ALL` (persiste los productos) — activar uno no activa el otro.
+- **`HibernatePropertiesCustomizer`**: Spring Boot no conecta por defecto su `Validator` al `ConstraintValidatorFactory` de Hibernate. Sin este bean, el flush usa reflexión pura y no puede instanciar validadores con dependencias (como `NombreEmpresaUnicoValidator`).
+- **Soft delete** de `Empresa`: campo `activo`, `findByActivoTrue()`, `softDelete(id)` (`@Modifying @Query` con `UPDATE`), y `findByIdConProductos(id)` con `JOIN FETCH` explícito.
+- **Spring Boot Actuator**: `/actuator/health` con detalle completo (incluye estado de MySQL), métricas de Hibernate y del pool HikariCP.
+
+### Errores provocados y resueltos (valor pedagógico)
+
+`DemoApplication` tiene 6 bloques numerados, cada uno con su moraleja:
+
+| Bloque | Qué demuestra |
+|---|---|
+| 2 | Una entidad inválida vive feliz en memoria: explota recién en el flush (`ConstraintViolationException`), no al construirla. |
+| 3 | Guardado válido pasando por `guardarValidando()` — el camino correcto. |
+| 4 | `CascadeType.ALL` ≠ `@Valid`: sin `@Valid` en `productos`, un producto inválido se cuela por la validación explícita del servicio y recién explota en el flush. |
+| 5 | Validación programática exitosa con empresa + productos válidos. |
+| 6 | Un `ConstraintValidator` que consulta la base solo es seguro si se invoca *explícitamente* (vía servicio); si vive en el grupo `Default` y se dispara en el flush automático, corrompe la `Session` en vez de validar. |
+
+### Archivos principales
+
+```
+validator/NombreEmpresaUnico.java          # anotación del constraint
+validator/NombreEmpresaUnicoValidator.java # lógica, con EmpresaRepository inyectado
+validator/ChequeoUnicidad.java             # grupo de validación aparte del Default
+model/Empresa.java                         # constraints + @Valid en productos + activo
+model/Producto.java                        # constraints + campo cantidad
+service/EmpresaService.java                # guardarValidando(), softDelete()
+repository/EmpresaRepository.java          # findByActivoTrue, findByIdConProductos, softDelete
+DemoApplication.java                       # HibernatePropertiesCustomizer + 6 bloques de demo
+resources/ValidationMessages.properties    # mensajes de validación externalizados
+```
+
+### Aprendizajes clave
+
+- Bean Validation en JPA no es "gratis": Hibernate valida el grupo `Default` en cada flush, y eso incluye cualquier `save()`, sea directo o vía servicio.
+- Un `ConstraintValidator` con dependencias (inyección por constructor) solo se instancia correctamente si quien lo crea es Spring — el `ConstraintValidatorFactory` por defecto de Hibernate Validator usa reflexión pura y no sabe resolver esas dependencias.
+- Cuando un constraint necesita consultar la base, separarlo del grupo `Default` y validarlo explícitamente en el servicio evita el flush reentrante, que es un problema real y no solo teórico.
